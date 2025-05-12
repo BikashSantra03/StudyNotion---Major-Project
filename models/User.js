@@ -16,15 +16,35 @@ const userSchema = new mongoose.Schema({
     trim: true,
     required: true,
   },
+  contactNumber: {
+    type: Number,
+    required: true,
+    trim: true,
+  },
   password: {
     type: String,
     required: true,
   },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpire: {
+    type: Date,
+    default: null,
+  },
+
   accountType: {
     type: String,
     enum: ["Admin", "Student", "Instructor"],
     required: true,
   },
+
+  image: {
+    type: String,
+    required: true,
+  },
+
   additionalDetails: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Profile",
@@ -39,10 +59,6 @@ const userSchema = new mongoose.Schema({
     },
   ],
 
-  image: {
-    type: String,
-    required: true,
-  },
   courseProgress: [
     {
       type: mongoose.Schema.Types.ObjectId,
