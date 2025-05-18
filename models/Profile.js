@@ -5,7 +5,7 @@ const profileSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  DateOfBirth: {
+  dateOfBirth: {
     type: String,
     required: true,
   },
