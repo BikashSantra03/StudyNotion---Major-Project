@@ -7,7 +7,14 @@ const ratingAndRevieweSchema = new mongoose.Schema({
     required: true,
   },
 
-  ratng: {
+  course: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: "Course",
+    index: true,
+  },
+
+  rating: {
     type: String,
     required: true,
   },

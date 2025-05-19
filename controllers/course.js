@@ -1,7 +1,7 @@
 const Course = require("../models/Course");
 const Category = require("../models/Category");
 const User = require("../models/User");
-const uploadImageToCloudinary = require("../utils/imageUploader");
+const { uploadImageToCloudinary } = require("../utils/imageUploader");
 
 //create course
 exports.createCourse = async (req, res) => {
@@ -85,9 +85,59 @@ exports.createCourse = async (req, res) => {
   }
 };
 
-//get all courses
+//get course by id
+exports.getCourseById = async (req, res) => {
+  try {
+    const courseId = req.body.courseId;
+    //data validation
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide course id",
+      });
+    }
 
-const showAllCourses = async (req, res) => {
+    //check course exists or not
+    const course = await Course.findById(courseId)
+      .populate({
+        path: "instructor",
+        populate: {
+          path: "additionalDetails",
+        },
+      })
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subSections",
+        },
+      })
+      .populate("category")
+      .populate("ratingAndReviews");
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    //return response
+    return res.status(200).json({
+      success: true,
+      message: "Course retrieved successfully",
+      course,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//get all courses
+exports.showAllCourses = async (req, res) => {
   try {
     const courses = await Course.find()
       .populate("instructor", "firstName, lastName, email")
@@ -105,6 +155,74 @@ const showAllCourses = async (req, res) => {
       success: true,
       message: "Courses retrieved successfully",
       courses,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//get top selling courses
+exports.getTopSellingCourses = async (req, res) => {
+  try {
+    const topSoldCourses = await Course.aggregate([
+      {
+        $addFields: {
+          totalStudentsEnrolled: { $size: "$studentsEnrolled" },
+        },
+      },
+      { $sort: { totalStudentsEnrolled: -1 } },
+      { $limit: 5 },
+
+      // populate the instructor field by lookup
+      {
+        $lookup: {
+          from: "user",
+          localField: "instructor",
+          foreignField: "_id",
+          as: "instructor",
+        },
+      },
+      { $unwind: "$instructor" },
+
+      // populate the category field by lookup
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+
+      //project the required fields
+      /*  {
+        $pro ject: {
+          title: 1,
+          totalStudentsEnrolled: 1,
+          "instructor.firstName": 1,
+          "instructor.lastName": 1,
+          "category.name": 1,
+          price: 1,
+          createdAt: 1,
+        },
+      }, */
+    ]);
+    if (!topSoldCourses || topSoldCourses.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No courses found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Top selling courses retrieved successfully",
+      topSoldCourses,
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,6 @@
 const Section = require("../models/Section");
 const SubSection = require("../models/SubSection");
-const cloudinary = require("../utils/cloudinary");
+const { cloudinary } = require("../utils/cloudinary");
 
 //create subsection
 exports.createSubsection = async (req, res) => {
