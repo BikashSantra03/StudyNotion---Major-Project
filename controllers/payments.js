@@ -1,9 +1,15 @@
 const { instance } = require("../config/razorpayConfig");
+
 const Course = require("../models/Course");
 const User = require("../models/User");
 
 const mailSender = require("../utils/mailSender");
-const { courseEnrollmentMail } = require("../utils/mailTemplates");
+const {
+  courseEnrollmentMail,
+} = require("../mail/templates/courseEnrollmentEmail");
+const {
+  paymentSuccessEmail,
+} = require("../mail/templates/paymentSuccessEmail");
 
 const crypto = require("crypto");
 
@@ -85,7 +91,7 @@ exports.verifySignature = async (req, res) => {
   try {
     const razorpaySignature = req.headers["x-razorpay-signature"];
     const generatedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
       .update(`${req.body.razorpay_order_id}|${req.body.razorpay_payment_id}`)
       .digest("hex");
 
@@ -153,5 +159,38 @@ exports.verifySignature = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+// Send Payment Success Email
+exports.sendPaymentSuccessEmail = async (req, res) => {
+  const { orderId, paymentId, amount } = req.body;
+
+  const userId = req.user.id;
+
+  if (!orderId || !paymentId || !amount || !userId) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Please provide all the details" });
+  }
+
+  try {
+    const enrolledStudent = await User.findById(userId);
+
+    await mailSender(
+      enrolledStudent.email,
+      `Payment Received`,
+      paymentSuccessEmail(
+        `${enrolledStudent.firstName} ${enrolledStudent.lastName}`,
+        amount / 100,
+        orderId,
+        paymentId
+      )
+    );
+  } catch (error) {
+    console.log("error in sending mail", error);
+    return res
+      .status(400)
+      .json({ success: false, message: "Could not send email" });
   }
 };

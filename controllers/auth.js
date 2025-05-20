@@ -20,7 +20,6 @@ async function hashThePassword(password) {
 }
 //-----------------------------------------------------------------------------------------------------------------------
 
-
 // Controllers starts ⬇️⬇️⬇️⬇️--------------------------------------------------------------------------------------
 
 // Send OTP while signUp
@@ -46,7 +45,7 @@ exports.sendOTP = async (req, res) => {
     });
 
     //check OTP already exists in the DB or not
-    let result = await OTP.findOne({ Otp: generatedOTP });
+    let result = await OTP.findOne({ otp: generatedOTP });
 
     while (result) {
       //create new OTP
@@ -55,14 +54,15 @@ exports.sendOTP = async (req, res) => {
         upperCaseAlphabets: false,
         specialChars: false,
       });
-      result = await OTP.findOne({ Otp: generatedOTP });
+      result = await OTP.findOne({ otp: generatedOTP });
     }
 
     //create unique OTP entry in the DB
-    const otpPayload = { email, generatedOTP };
+    const otpPayload = { email, otp: generatedOTP };
+    //console.log(otpPayload);
 
     const otpBody = await OTP.create(otpPayload);
-    console.log(otpBody);
+    //console.log(otpBody);
 
     return res.status(200).json({
       success: true,
@@ -114,6 +114,7 @@ exports.signUp = async (req, res) => {
           "Password and ConfirmPassword value does not match! Please try again",
       });
     }
+
     //check new user or not
     const isOldUser = await User.findOne({ email });
 
@@ -125,12 +126,9 @@ exports.signUp = async (req, res) => {
     }
 
     //find most recent OTP document for the user
-    const latestOTPDocument = await OTP.find(email)
+    const latestOTPDocument = await OTP.find({ email })
       .sort({ createdAt: -1 })
-      .limit(1)
-      .toArray();
-
-    console.log(latestOTPDocument);
+      .limit(1);
 
     //validate OTP
     if (latestOTPDocument.length === 0) {
@@ -138,7 +136,7 @@ exports.signUp = async (req, res) => {
         success: false,
         message: "OTP not found!",
       });
-    } else if (otp !== latestOTPDocument.otp) {
+    } else if (otp !== latestOTPDocument[0].otp) {
       return res.status(400).json({
         success: false,
         message: "Invalid OTP!",
@@ -146,12 +144,12 @@ exports.signUp = async (req, res) => {
     }
 
     //hash the password
-    const hashedPassword = hashThePassword(password);
+    const hashedPassword = await hashThePassword(password);
 
     //Create User entry in DB
     const profileDetails = await Profile.create({
       gender: null,
-      DateOfBirth: null,
+      dateOfBirth: null,
       contactNumber: null,
       about: null,
     });
@@ -166,12 +164,18 @@ exports.signUp = async (req, res) => {
       additionalDetails: profileDetails._id,
       image: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&size=128&background=0D8ABC&color=fff&rounded=true`,
     });
+
+    //console.log("User details are", newUser);
+
+    //delete OTP entry from DB
+    await OTP.findByIdAndDelete(latestOTPDocument[0]._id);
+
     return res.status(200).json({
       success: true,
       message: "User registered Succesfully",
     });
   } catch (error) {
-    return res.status(400).jspn({
+    return res.status(400).json({
       success: false,
       message: "User Can not be registered! Please try again",
     });

@@ -6,8 +6,16 @@ const { uploadImageToCloudinary } = require("../utils/imageUploader");
 //create course
 exports.createCourse = async (req, res) => {
   try {
-    const { courseName, courseDescription, whatYouWillLearn, price, category } =
-      req.body;
+    let {
+      courseName,
+      courseDescription,
+      whatYouWillLearn,
+      price,
+      category,
+      tag,
+      instructions,
+      status,
+    } = req.body;
 
     const thumbnail = req.files.thumbnailImage;
 
@@ -18,12 +26,18 @@ exports.createCourse = async (req, res) => {
       !thumbnail ||
       !price ||
       !whatYouWillLearn ||
-      !category
+      !category ||
+      !tag ||
+      !instructions ||
+      status
     ) {
       return res.status(400).json({
         success: false,
         message: "Please provide all required fields",
       });
+    }
+    if (!status || status === undefined) {
+      status = "Draft";
     }
 
     //check instructor or not
@@ -58,11 +72,14 @@ exports.createCourse = async (req, res) => {
       price,
       category: categoryExists._id,
       thumbnail: thumbnailImage.secure_url,
-      instructor: req.user._id,
+      instructor: req.user.id,
+      tag,
+      instructions,
+      status,
     });
 
     //push course to instructor
-    const instructor = await User.findById(req.user._id);
+    const instructor = await User.findById(req.user.id);
     instructor.courses.push(course._id);
     await instructor.save();
 
@@ -77,8 +94,8 @@ exports.createCourse = async (req, res) => {
       course,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
+      error: error.message,
       success: false,
       message: "Internal server error",
     });
@@ -86,7 +103,7 @@ exports.createCourse = async (req, res) => {
 };
 
 //get course by id
-exports.getCourseById = async (req, res) => {
+exports.getCourseDetails = async (req, res) => {
   try {
     const courseId = req.body.courseId;
     //data validation
@@ -137,7 +154,7 @@ exports.getCourseById = async (req, res) => {
 };
 
 //get all courses
-exports.showAllCourses = async (req, res) => {
+exports.getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find()
       .populate("instructor", "firstName, lastName, email")

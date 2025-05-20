@@ -3,18 +3,15 @@ const mongoose = require("mongoose");
 const courseSchema = new mongoose.Schema({
   courseName: {
     type: String,
-    required: true,
   },
 
   courseDescription: {
     type: String,
-    required: true,
   },
 
   instructor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
   },
 
   whatYouWillLearn: {
@@ -25,7 +22,6 @@ const courseSchema = new mongoose.Schema({
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Section",
-      required: true,
     },
   ],
 
@@ -40,7 +36,6 @@ const courseSchema = new mongoose.Schema({
 
   tag: {
     type: [String],
-    required: true,
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -53,6 +48,11 @@ const courseSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+
+  status: {
+    type: String,
+    enum: ["Draft", "Published"],
+  },
 
   ratingAndReviews: [
     {

@@ -2,7 +2,7 @@ const Category = require("../models/Category");
 const Course = require("../models/Course");
 const { getTopSellingCourses } = require("./course");
 
-exports.createCategories = (req, res) => {
+exports.createCategory = async (req, res) => {
   try {
     const { name, description } = req.body;
 
@@ -19,11 +19,11 @@ exports.createCategories = (req, res) => {
       description,
     });
 
-    category.save((err, category) => {
-      if (err) {
-        return res.status(500).json({ message: "Internal server error" });
-      }
-      return res.status(200).json({ success: true, category });
+    await category.save();
+    return res.status(201).json({
+      success: true,
+      message: "Category created successfully",
+      category,
     });
   } catch (error) {
     console.log(error);

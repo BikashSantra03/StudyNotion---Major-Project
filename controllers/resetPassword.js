@@ -1,6 +1,8 @@
 const User = require("../models/User");
-const {mailSender} = require("../utils/mailSender");
+const mailSender = require("../utils/mailSender");
+const bcrypt = require("bcrypt");
 
+//reset password token for Mail reset link
 exports.resetPasswordToken = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -23,24 +25,30 @@ exports.resetPasswordToken = async (req, res, next) => {
       resetPasswordExpire: Date.now() + 15 * 60 * 1000, // 15 minutes
     });
 
-    //send password reset link to the user email
+    //Email reset link
     const resetUrl = `${req.protocol}://${req.get(
       "host"
     )}/update-password/${Token}`;
     // const resetUrl = `http://localhost:3000/update-password/${Token}`;
+
     const title = "Password Reset Link";
     const body = `Your password reset link is as follows: \n\n ${resetUrl} \n\n If you did not request this email, please ignore it. \n\n Thank you!`;
-    await mailSender({
-      email,
-      title,
-      body,
-    });
+
+    //send email
+    const mailResponse = await mailSender(email, title, body);
+    if (!mailResponse) {
+      return res.status(500).json({
+        success: false,
+        message: "Error sending email",
+      });
+    }
     return res.status(200).json({
       success: true,
       message: `Password reset link has been sent to ${email}`,
     });
   } catch (error) {
     return res.status(500).json({
+      error: error.message,
       success: false,
       message: "Internal server error",
     });
@@ -72,6 +80,7 @@ exports.updatePassword = async (req, res, next) => {
       resetPasswordToken: token,
       resetPasswordExpire: { $gt: Date.now() }, //gt means greater than
     });
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -95,6 +104,7 @@ exports.updatePassword = async (req, res, next) => {
     });
   } catch (error) {
     return res.status(500).json({
+      error: error.message,
       success: false,
       message: "Internal server error",
     });

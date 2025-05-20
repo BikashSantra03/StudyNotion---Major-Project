@@ -11,15 +11,16 @@ const mailSender = async (email, title, body) => {
         pass: process.env.MAIL_PASS,
       },
     });
+    //console.log("Transporter created successfully");
 
     //send mail
     let info = await transporter.sendMail({
-      from: `Bikash Santra 👻<santrabikash922@gmail.com>`,
+      from: `Study Notion <santrabikash922@gmail.com>`,
       to: email,
       subject: title,
       html: body,
     });
-    console.log("Message sent:", info);
+    //console.log("Message sent:", info);
     return info;
   } catch (error) {
     console.log(error.message);

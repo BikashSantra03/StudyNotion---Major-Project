@@ -8,7 +8,7 @@ const subSectionSchema = new mongoose.Schema({
     type: String,
   },
   description: {
-    type: Number,
+    type: String,
   },
   videoUrl: {
     type: String,

@@ -5,7 +5,7 @@ const ratingAndReviews = require("../models/ratingAndReview");
 const User = require("../models/User");
 
 //create rating and review
-exports.createRatingAndReview = async (req, res) => {
+exports.createRating = async (req, res) => {
   try {
     const { rating, review, courseId } = req.body;
     const userId = req.user.id;
@@ -132,7 +132,7 @@ exports.getAverageRating = async (req, res) => {
 };
 
 //get all Ratings
-exports.getAllRatingsAndReview = async (req, res) => {
+exports.getAllRating = async (req, res) => {
   try {
     const { courseId } = req.body;
 

@@ -1,4 +1,6 @@
-const { Course, Section } = require("../models");
+const Section = require("../models/Section");
+const Course = require("../models/Course");
+const SubSection = require("../models/SubSection");
 
 //create section
 exports.createSection = async (req, res) => {
@@ -121,7 +123,7 @@ exports.updateSection = async (req, res) => {
 exports.deleteSection = async (req, res) => {
   try {
     // const { sectionId } = req.body;
-    const { sectionId } = req.params;
+    const { sectionId, courseId } = req.body;
 
     //data validation
     if (!sectionId) {
@@ -150,12 +152,23 @@ exports.deleteSection = async (req, res) => {
       });
     }
 
+    //delete sub section
+    await SubSection.deleteMany({ _id: { $in: sectionExists.subSections } });
     //delete section
     await Section.findByIdAndDelete(sectionId);
+
+    //find the updated course and return
+    const course = await Course.findById(courseId).populate({
+      path: "courseContent",
+      populate: {
+        path: "subSections",
+      },
+    });
 
     return res.status(200).json({
       success: true,
       message: "Section deleted successfully",
+      course,
     });
   } catch (error) {
     console.error(error);

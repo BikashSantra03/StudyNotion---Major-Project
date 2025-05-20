@@ -1,12 +1,12 @@
 const Section = require("../models/Section");
 const SubSection = require("../models/SubSection");
-const { cloudinary } = require("../utils/cloudinary");
+const { uploadImageToCloudinary } = require("../utils/imageUploader");
 
 //create subsection
-exports.createSubsection = async (req, res) => {
+exports.createSubSection = async (req, res) => {
   try {
-    const { title, timeDuration, description } = req.body;
-    const { sectionId } = req.params;
+    const { title, timeDuration, description, sectionId } = req.body;
+
     const video = req.files.videoFile;
 
     //data validation
@@ -27,7 +27,7 @@ exports.createSubsection = async (req, res) => {
     }
 
     //upload video to cloudinary
-    const uploadDetails = await cloudinary.uploader.upload(
+    const uploadDetails = await uploadImageToCloudinary(
       video,
       process.env.CLOUDINARY_VIDEO_FOLDER
     );
@@ -65,7 +65,7 @@ exports.createSubsection = async (req, res) => {
 };
 
 //update subsection
-exports.updateSubsection = async (req, res) => {
+exports.updateSubSection = async (req, res) => {
   try {
     const { title, timeDuration, description } = req.body;
     const { subsectionId } = req.params;
@@ -89,7 +89,7 @@ exports.updateSubsection = async (req, res) => {
     }
 
     //upload video to cloudinary
-    const uploadDetails = await cloudinary.uploader.upload(
+    const uploadDetails = await uploadImageToCloudinary(
       video,
       process.env.CLOUDINARY_VIDEO_FOLDER
     );
@@ -122,7 +122,7 @@ exports.updateSubsection = async (req, res) => {
 };
 
 //delete subsection
-exports.deleteSubsection = async (req, res) => {
+exports.deleteSubSection = async (req, res) => {
   try {
     const { subsectionId } = req.params;
 

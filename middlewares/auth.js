@@ -4,18 +4,22 @@ const jwt = require("jsonwebtoken");
 exports.auth = async (req, res, next) => {
   try {
     const token =
-      req.headers["authorization"].replace("Bearer ", "") ||
       req.cookies.Token ||
-      req.body.token;
+      req.body.Token ||
+      req.header("Authorization").replace("Bearer ", "");
+
+    //console.log("Token: ", token);
     if (!token) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized! No token provided",
       });
     }
+
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = decoded;
+
       next();
     } catch (error) {
       return res.status(401).json({
@@ -56,6 +60,24 @@ exports.isInstructor = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: "Forbidden! You are not an instructor",
+      });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//isAdmin middleware
+exports.isAdmin = async (req, res, next) => {
+  try {
+    if (req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Forbidden! You are not an admin",
       });
     }
     next();
